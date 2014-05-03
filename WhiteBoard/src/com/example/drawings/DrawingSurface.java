@@ -5,22 +5,28 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.PorterDuff;
+import android.os.Handler;
+import android.os.Message;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import com.example.drawings.CommandManager;
+import com.example.drawings.DrawingPath;
+import com.example.drawings.DrawingSurface.DrawThread;
+
 public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callback {
     private Boolean _run;
     protected DrawThread thread;
     private Bitmap mBitmap;
     public boolean isDrawing = true;
+    public DrawingPath previewPath;
 
     private CommandManager commandManager;
 
@@ -34,6 +40,12 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         thread = new DrawThread(getHolder());
     }
 
+    private Handler previewDoneHandler = new Handler(){
+        @Override
+        public void handleMessage(Message msg) {
+            isDrawing = false;
+        }
+    };
 
     class DrawThread extends  Thread{
         private SurfaceHolder mSurfaceHolder;
@@ -63,14 +75,17 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
                         c.drawColor(0, PorterDuff.Mode.CLEAR);
                         canvas.drawColor(0, PorterDuff.Mode.CLEAR);
-                        
-                        commandManager.executeAll(c);
 
+
+                        commandManager.executeAll(c,previewDoneHandler);
+                        previewPath.draw(c);
+                        
                         canvas.drawBitmap (mBitmap, 0,  0,null);
                     } finally {
                         mSurfaceHolder.unlockCanvasAndPost(canvas);
                     }
-                    isDrawing = false;
+
+
                 }
 
             }

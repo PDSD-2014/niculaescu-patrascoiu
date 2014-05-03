@@ -15,6 +15,9 @@ import android.os.Message;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+
+import com.example.drawings.DrawingPath;
+import com.example.drawings.DrawingSurface;
 import com.example.whiteboard.R;
 import com.example.brush.Brush;
 import com.example.brush.CircleBrush;

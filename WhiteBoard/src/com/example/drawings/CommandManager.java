@@ -1,12 +1,15 @@
 package com.example.drawings;
 
 import android.graphics.Canvas;
+import android.os.Handler;
 import android.util.Log;
 
 import java.util.Iterator;
 import java.util.List;
 import java.util.Collections;
 import java.util.ArrayList;
+
+import com.example.drawings.DrawingPath;
 
 public class CommandManager {
     private List<DrawingPath> currentStack;
@@ -39,14 +42,15 @@ public class CommandManager {
     }
 
 
-    public void executeAll( Canvas canvas){
+    public void executeAll( Canvas canvas, Handler doneHandler){
         if( currentStack != null ){
             synchronized( currentStack ) {
                 final Iterator i = currentStack.iterator();
-                Log.d("aaa",currentStack.toArray().length + "");
+                
                 while ( i.hasNext() ){
                     final DrawingPath drawingPath = (DrawingPath) i.next();
                     drawingPath.draw( canvas );
+                    //doneHandler.sendEmptyMessage(1);
                 }
             }
         }

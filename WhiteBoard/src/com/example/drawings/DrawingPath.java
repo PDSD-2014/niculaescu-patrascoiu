@@ -1,5 +1,7 @@
 package com.example.drawings;
 
+import com.example.drawings.ICanvasCommand;
+
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.Path;
