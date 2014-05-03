@@ -12,6 +12,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
@@ -25,11 +26,15 @@ import com.example.brush.PenBrush;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 public class DrawingActivity extends Activity implements View.OnTouchListener{
     private DrawingSurface drawingSurface;
     private DrawingPath currentDrawingPath;
     private Paint currentPaint;
+    
+    private ArrayList<Float> coords;
 
     private Button redoBtn;
     private Button undoBtn;
@@ -37,9 +42,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
     private Brush currentBrush;
 
     private File APP_FILE_PATH = new File("/sdcard/TutorialForAndroidDrawings");
-
-    
-
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,22 +87,27 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
 
 
-
+ 
     public boolean onTouch(View view, MotionEvent motionEvent) {
         if(motionEvent.getAction() == MotionEvent.ACTION_DOWN){
             drawingSurface.isDrawing = true;
 
+            coords = new ArrayList<Float>();
             currentDrawingPath = new DrawingPath();
             currentDrawingPath.paint = currentPaint;
             currentDrawingPath.path = new Path();
             currentBrush.mouseDown(currentDrawingPath.path, motionEvent.getX(), motionEvent.getY());
             currentBrush.mouseDown(drawingSurface.previewPath.path, motionEvent.getX(), motionEvent.getY());
+            coords.add(motionEvent.getX());
+            coords.add(motionEvent.getY());
 
             
         }else if(motionEvent.getAction() == MotionEvent.ACTION_MOVE){
             drawingSurface.isDrawing = true;
-            currentBrush.mouseMove( currentDrawingPath.path, motionEvent.getX(), motionEvent.getY() );
+            currentBrush.mouseMove(currentDrawingPath.path, motionEvent.getX(), motionEvent.getY() );
             currentBrush.mouseMove(drawingSurface.previewPath.path, motionEvent.getX(), motionEvent.getY());
+            coords.add(motionEvent.getX());
+            coords.add(motionEvent.getY());
 
 
         }else if(motionEvent.getAction() == MotionEvent.ACTION_UP){
@@ -110,7 +117,16 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             drawingSurface.previewPath.path = new Path();
             drawingSurface.addDrawingPath(currentDrawingPath);
 
-            currentBrush.mouseUp( currentDrawingPath.path, motionEvent.getX(), motionEvent.getY() );
+            currentBrush.mouseUp(currentDrawingPath.path, motionEvent.getX(), motionEvent.getY() );
+            
+            coords.add(motionEvent.getX());
+            coords.add(motionEvent.getY());
+    		
+    		try {
+    			auxDraw(coords.toArray(new Float[coords.size()]));
+    		} catch (Exception e) {
+    			e.printStackTrace();
+    		}
 
             undoBtn.setEnabled(true);
             redoBtn.setEnabled(false);
@@ -118,6 +134,29 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
         }
 
         return true;
+    }
+    
+    public void auxDraw(Float[] coords) {
+    	
+    	DrawingPath path = new DrawingPath();
+    	Paint paint = new Paint();
+    	
+        paint.setDither(true);
+        paint.setColor(0xFFFFFFFF);
+        paint.setStyle(Paint.Style.STROKE);
+        paint.setStrokeJoin(Paint.Join.ROUND);
+        paint.setStrokeCap(Paint.Cap.ROUND);
+        paint.setStrokeWidth(3);
+        
+    	path.path = new Path();
+    	path.paint = paint;
+    
+    	Brush br = new PenBrush();
+    	br.mouseDown(path.path, coords[0], coords[1] + 10);
+    	for (int i = 0; i < coords.length; i += 2)
+    		br.mouseMove(path.path, coords[i], coords[i + 1] + 10);
+
+        drawingSurface.addDrawingPath(path);
     }
 
 
