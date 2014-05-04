@@ -19,6 +19,7 @@ import android.widget.Button;
 
 import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
+import com.example.listener.Listener;
 import com.example.whiteboard.R;
 import com.example.brush.Brush;
 import com.example.brush.CircleBrush;
@@ -26,13 +27,23 @@ import com.example.brush.PenBrush;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class DrawingActivity extends Activity implements View.OnTouchListener{
     private DrawingSurface drawingSurface;
     private DrawingPath currentDrawingPath;
     private Paint currentPaint;
+    
+    private Listener listener;
+    
+    public DrawingActivity() throws IOException {
+    	Log.d("MAIN", "here1");
+        listener = new Listener(this);
+        //listener.newConnection("127.0.0.1", 30000);
+        Log.d("MAIN", "here");
+    }
     
     private ArrayList<Float> coords;
 
@@ -121,12 +132,14 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             
             coords.add(motionEvent.getX());
             coords.add(motionEvent.getY());
+            
+            transmitPath(coords);
     		
-    		try {
-    			auxDraw(coords.toArray(new Float[coords.size()]));
+    		/*try {
+    			auxDraw(coords.toArray(new float[coords.size()]));
     		} catch (Exception e) {
     			e.printStackTrace();
-    		}
+    		}*/
 
             undoBtn.setEnabled(true);
             redoBtn.setEnabled(false);
@@ -136,7 +149,17 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
         return true;
     }
     
-    public void auxDraw(Float[] coords) {
+    private void transmitPath(ArrayList<Float> coords) {
+        ByteBuffer buffer = ByteBuffer.allocate(4 * coords.size());
+
+        for (float value : coords) {
+            buffer.putFloat(value + 10);
+        }
+		
+        listener.sendPath(buffer);
+	}
+
+	public void auxDraw(float[] fs) {
     	
     	DrawingPath path = new DrawingPath();
     	Paint paint = new Paint();
@@ -152,9 +175,9 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
     	path.paint = paint;
     
     	Brush br = new PenBrush();
-    	br.mouseDown(path.path, coords[0], coords[1] + 10);
-    	for (int i = 0; i < coords.length; i += 2)
-    		br.mouseMove(path.path, coords[i], coords[i + 1] + 10);
+    	br.mouseDown(path.path, fs[0], fs[1] + 10);
+    	for (int i = 0; i < fs.length; i += 2)
+    		br.mouseMove(path.path, fs[i], fs[i + 1] + 10);
 
         drawingSurface.addDrawingPath(path);
     }
