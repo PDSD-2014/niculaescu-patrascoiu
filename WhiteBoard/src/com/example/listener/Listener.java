@@ -14,6 +14,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
+import android.os.AsyncTask;
 import android.util.Log;
 
 import com.example.drawings.DrawingActivity;
@@ -61,14 +62,14 @@ public class Listener implements Runnable {
 					// get current event and REMOVE it from the list!!!
 					final SelectionKey key = it.next();
 					it.remove();
-
 					if (key.isAcceptable()) {
 						/* Create a new connection for sending/receiving information */
 						ServerSocketChannel listener= (ServerSocketChannel)key.channel();
 						SocketChannel newConn = listener.accept();
 						newConn.configureBlocking(false);
-						Peer p = new Peer(whiteBoard, newConn);
+						Peer p = new Peer(getWhiteBoard(), newConn);
 						peers.add(p);
+						Log.d(TAG, "New Connection");
 						newConn.register(selector, SelectionKey.OP_READ, p);
 						selector.wakeup();
 					} else 	if (key.isReadable() || key.isWritable()) {
@@ -85,7 +86,7 @@ public class Listener implements Runnable {
 										selector.wakeup();
 									}
 								} catch (ClosedChannelException e) {
-									e.printStackTrace();
+									Log.e(TAG, "", e);
 								}
 							}
 						});
@@ -120,23 +121,47 @@ public class Listener implements Runnable {
 	}
 
 	public void sendPath(ByteBuffer buffer) {
-		
-		for(Peer p : peers) {
-			p.sendPath(buffer);
-		}
-		
+		new SendPath().execute(peers, buffer);
 	}
 
 	public void newConnection(String address, int port) {
-		try {
-			SocketChannel socket = SocketChannel.open();
-			socket.connect(new InetSocketAddress(address, port));
-			Peer peer = new Peer(whiteBoard, socket);
-			socket.configureBlocking(false);
-			registerSocket(socket, peer);
-		} catch(Exception e) {
-			Log.e(TAG, "Error", e);
-		}
-		
+		new NewConnection().execute(this, address, port);
+	}
+
+	public DrawingActivity getWhiteBoard() {
+		return whiteBoard;
 	}
 }
+
+class NewConnection extends AsyncTask<Object, Listener, Void> {
+    
+	protected Void doInBackground(Object ... params) {
+		try {
+			Listener listener = (Listener) params[0];
+			SocketChannel socket = SocketChannel.open();
+			socket.connect(new InetSocketAddress((String)params[1], (Integer)params[2]));
+			Peer peer = new Peer(listener.getWhiteBoard(), socket);
+			socket.configureBlocking(false);
+			listener.registerSocket(socket, peer);
+		} catch(Exception e) {
+			Log.e("NewConn", "Error", e);
+		}
+		return null;
+    }
+}
+
+class SendPath extends AsyncTask<Object, Void, Void> {
+
+	@SuppressWarnings("unchecked")
+	@Override
+	protected Void doInBackground(Object... params) {
+		ArrayList<Peer> peers = (ArrayList<Peer>) params[0];
+		ByteBuffer buffer = (ByteBuffer) params[1];
+		for(Peer p : peers) {
+			p.sendPath(buffer);
+		}
+		return null;
+	}
+	
+}
+

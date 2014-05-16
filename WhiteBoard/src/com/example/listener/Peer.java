@@ -2,6 +2,7 @@ package com.example.listener;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.channels.SocketChannel;
 
 import android.util.Log;
@@ -21,22 +22,26 @@ public class Peer {
 	public void drawFigure(SocketChannel channel) {
 		ByteBuffer buffer = ByteBuffer.allocate(4096);
 		try {
-			channel.read(buffer);
-			whiteBoard.auxDraw(buffer.asFloatBuffer().array());
+			Log.d("Peer", "read " + channel.read(buffer));
+			buffer.flip();
+			float[] coords = new float[buffer.limit() / 4];
+			buffer.asFloatBuffer().get(coords);
+			whiteBoard.auxDraw(coords);
 		} catch (IOException e) {
 			try {
 				channel.close();
 			} catch (IOException e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				Log.d("Peer", "Error", e1);
 			}
-			e.printStackTrace();
+			Log.d("Peer", "Error", e);
+		} catch (Exception e) {
+			Log.d("Peer", "Error", e);
 		}
 	}
 
 	public void sendPath(ByteBuffer buffer) {
 		try {
-			sock.write(buffer);
+			Log.d("aux", "wrote " + sock.write(buffer));
 		} catch (IOException e) {
 			Log.e("Peer", "Error", e);
 			try {
