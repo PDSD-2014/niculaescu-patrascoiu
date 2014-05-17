@@ -1,5 +1,6 @@
 package com.example.drawings;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -10,13 +11,12 @@ import android.graphics.Paint;
 import android.graphics.Path;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-
 import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
 import com.example.listener.Listener;
@@ -24,7 +24,6 @@ import com.example.whiteboard.R;
 import com.example.brush.Brush;
 import com.example.brush.CircleBrush;
 import com.example.brush.PenBrush;
-
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -36,11 +35,8 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
     private DrawingPath currentDrawingPath;
     private Paint currentPaint;
     
-    private Listener listener;
-    
     public DrawingActivity() throws IOException {
-        listener = new Listener(this);
-        listener.newConnection("127.0.0.1", 30000);
+    	Listener.getListener().setDrawingActivity(this);
     }
     
     private ArrayList<Float> coords;
@@ -50,7 +46,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
     private Brush currentBrush;
 
-    private File APP_FILE_PATH = new File("/sdcard/TutorialForAndroidDrawings");
+    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/TutorialForAndroidDrawings");
 
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -154,8 +150,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             buffer.putFloat(value + 10);
         }
 		
-        buffer.flip();
-        listener.sendPath(buffer);
+        Listener.getListener().sendPath(buffer);
 	}
 
 	public void auxDraw(float[] fs) {
@@ -181,7 +176,8 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
     }
 
 
-    public void onClick(View view){
+    @SuppressLint("HandlerLeak")
+	public void onClick(View view){
         switch (view.getId()){
             case R.id.colorRedBtn:
                 currentPaint = new Paint();
@@ -235,7 +231,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
                         final AlertDialog alertDialog = new AlertDialog.Builder(currentActivity).create();
                         alertDialog.setTitle("Saved 1");
                         alertDialog.setMessage("Your drawing had been saved :)");
-                        alertDialog.setButton("OK", new DialogInterface.OnClickListener() {
+                        alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 return;
                             }
@@ -243,7 +239,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
                         alertDialog.show();
                     }
                 } ;
-               new ExportBitmapToFile(this,saveHandler, drawingSurface.getBitmap()).execute();
+               new ExportBitmapToFile(this, saveHandler, drawingSurface.getBitmap()).execute();
             break;
             case R.id.circleBtn:
                 currentBrush = new CircleBrush();
@@ -256,12 +252,10 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
 
     private class ExportBitmapToFile extends AsyncTask<Intent,Void,Boolean> {
-        private Context mContext;
         private Handler mHandler;
         private Bitmap nBitmap;
 
         public ExportBitmapToFile(Context context,Handler handler,Bitmap bitmap) {
-            mContext = context;
             nBitmap = bitmap;
             mHandler = handler;
         }

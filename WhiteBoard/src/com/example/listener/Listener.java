@@ -24,28 +24,45 @@ import com.example.drawings.DrawingActivity;
  */
 public class Listener implements Runnable {
 
-	private final String TAG = "Listener";
+	private final static String TAG = "Listener";
 	private Selector selector;
 	private ServerSocketChannel listener;
 	private ExecutorService pool;
 	private ReentrantLock selectorLock;
 	
+	private static Listener instance;
+	
 	private DrawingActivity whiteBoard;
 	private ArrayList<Peer> peers = new ArrayList<Peer>();
 	
-	public Listener(DrawingActivity whiteBoard) throws IOException {
-		this.whiteBoard = whiteBoard;
+	private Listener() throws IOException {
 		selector = Selector.open();
 		selectorLock = new ReentrantLock();
 		
-		/* Open listener and register it with the selector*/
+		/* Open listener and register it with the selector. Listen on all interfaces. */
 		listener = ServerSocketChannel.open();
-		listener.socket().bind(new InetSocketAddress("127.0.0.1", 30000));
+
+		listener.socket().bind(new InetSocketAddress("0.0.0.0", 30000));
 		listener.configureBlocking(false);
 		listener.register(selector, SelectionKey.OP_ACCEPT, null);
 		
 		pool = Executors.newFixedThreadPool(2);
 		pool.submit(this);
+	}
+	
+	public static Listener getListener() {
+		if (instance == null) {
+			try {
+				instance = new Listener();
+			} catch (Exception e) {
+				Log.d(TAG, "Error", e);
+			}
+		}
+		return instance;
+	}
+	
+	public void setDrawingActivity(DrawingActivity whiteBoard) {
+		this.whiteBoard = whiteBoard;
 	}
 	
 	@Override
@@ -67,7 +84,7 @@ public class Listener implements Runnable {
 						ServerSocketChannel listener= (ServerSocketChannel)key.channel();
 						SocketChannel newConn = listener.accept();
 						newConn.configureBlocking(false);
-						Peer p = new Peer(getWhiteBoard(), newConn);
+						Peer p = new Peer(this, newConn);
 						peers.add(p);
 						Log.d(TAG, "New Connection");
 						newConn.register(selector, SelectionKey.OP_READ, p);
@@ -131,6 +148,10 @@ public class Listener implements Runnable {
 	public DrawingActivity getWhiteBoard() {
 		return whiteBoard;
 	}
+
+	public void removePeer(Peer peer) {
+		peers.remove(peer);
+	}
 }
 
 class NewConnection extends AsyncTask<Object, Listener, Void> {
@@ -140,7 +161,7 @@ class NewConnection extends AsyncTask<Object, Listener, Void> {
 			Listener listener = (Listener) params[0];
 			SocketChannel socket = SocketChannel.open();
 			socket.connect(new InetSocketAddress((String)params[1], (Integer)params[2]));
-			Peer peer = new Peer(listener.getWhiteBoard(), socket);
+			Peer peer = new Peer(listener, socket);
 			socket.configureBlocking(false);
 			listener.registerSocket(socket, peer);
 		} catch(Exception e) {

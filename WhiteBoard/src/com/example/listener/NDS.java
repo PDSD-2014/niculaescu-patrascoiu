@@ -1,8 +1,6 @@
 package com.example.listener;
 
-import java.io.IOException;
 import java.net.InetAddress;
-import java.net.ServerSocket;
 
 import android.content.*;
 import android.net.nsd.NsdManager;
@@ -14,23 +12,14 @@ import android.util.Log;
 
 public class NDS {
 
-	protected static final String TAG = "Listener";
-	protected static final Object SERVICE_TYPE = "";
-	private ServerSocket mServerSocket;
-	private int mLocalPort;
+	protected static final String TAG = "NDS";
+	protected static final String SERVICE_TYPE = "_http._tcp.";
+	private final String SERVICE_NAME = "WhiteBoard";
 	private RegistrationListener mRegistrationListener;
 	private NsdManager mNsdManager;
 	private String mServiceName;
 	private DiscoveryListener mDiscoveryListener;
 	private ResolveListener mResolveListener;
-
-	public void initializeServerSocket() throws IOException {
-	    // Initialize a server socket on the next available port.
-	    mServerSocket = new ServerSocket(0);
-
-	    // Store the chosen port.
-	    mLocalPort =  mServerSocket.getLocalPort();
-	}
 	
 	public void initializeRegistrationListener() {
 	    mRegistrationListener = new NsdManager.RegistrationListener() {
@@ -41,11 +30,13 @@ public class NDS {
 	            // resolve a conflict, so update the name you initially requested
 	            // with the name Android actually used.
 	            mServiceName = NsdServiceInfo.getServiceName();
+	            Log.d(TAG, "Registered service with name: " + mServiceName);
+	            discoverServices();
 	        }
 
 	        @Override
 	        public void onRegistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-	            // Registration failed!  Put debugging code here to determine why.
+	            Log.w(TAG, "Service registration failed with code " + errorCode);
 	        }
 
 	        @Override
@@ -56,7 +47,7 @@ public class NDS {
 
 	        @Override
 	        public void onUnregistrationFailed(NsdServiceInfo serviceInfo, int errorCode) {
-	            // Unregistration failed.  Put debugging code here to determine why.
+	        	Log.w(TAG, "Service unregistration failed with code " + errorCode);
 	        }
 
 	    };
@@ -64,8 +55,8 @@ public class NDS {
 	
 	public void registerService(Context context, int port) {
 	    NsdServiceInfo serviceInfo  = new NsdServiceInfo();
-	    serviceInfo.setServiceName("NsdChat");
-	    serviceInfo.setServiceType("_http._tcp.");
+	    serviceInfo.setServiceName(SERVICE_NAME);
+	    serviceInfo.setServiceType(SERVICE_TYPE);
 	    serviceInfo.setPort(port);
 	   
 	    mNsdManager = (NsdManager) context.getSystemService(Context.NSD_SERVICE);
@@ -74,6 +65,16 @@ public class NDS {
 	            serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
 	}
 	
+	public void discoverServices() {
+	    mNsdManager.discoverServices(
+	            SERVICE_TYPE, NsdManager.PROTOCOL_DNS_SD, mDiscoveryListener);
+	}
+	
+    public void unregister() {
+    	mNsdManager.unregisterService(mRegistrationListener);
+    	mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+    }
+	
 	public void initializeResolveListener() {
 	    mResolveListener = new NsdManager.ResolveListener() {
 
@@ -81,22 +82,22 @@ public class NDS {
 
 			@Override
 	        public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-	            // Called when the resolve fails.  Use the error code to debug.
 	            Log.e(TAG, "Resolve failed" + errorCode);
 	        }
 
 	        @Override
 	        public void onServiceResolved(NsdServiceInfo serviceInfo) {
-	            Log.e(TAG, "Resolve Succeeded. " + serviceInfo);
 
 	            if (serviceInfo.getServiceName().equals(mServiceName)) {
 	                Log.d(TAG, "Same IP.");
 	                return;
 	            }
+	            
 	            mService = serviceInfo;
 	            int port = mService.getPort();
 	            InetAddress host = mService.getHost();
 	            Log.d(TAG, "Have " + host + ":" + port);
+	            Listener.getListener().newConnection(host.getHostAddress(), port);
 	        }
 	    };
 	}
@@ -122,9 +123,9 @@ public class NDS {
 	                Log.d(TAG, "Unknown Service Type: " + service.getServiceType());
 	            } else if (service.getServiceName().equals(mServiceName)) {
 	                // The name of the service tells the user what they'd be
-	                // connecting to. It could be "Bob's Chat App".
+	                // connecting to.
 	                Log.d(TAG, "Same machine: " + mServiceName);
-	            } else if (service.getServiceName().contains("NsdChat")){
+	            } else if (service.getServiceName().contains(SERVICE_NAME)){
 	                mNsdManager.resolveService(service, mResolveListener);
 	            }
 	        }

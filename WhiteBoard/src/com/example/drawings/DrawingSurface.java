@@ -1,25 +1,17 @@
 package com.example.drawings;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.PorterDuff;
 import android.os.Handler;
 import android.os.Message;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import com.example.drawings.CommandManager;
 import com.example.drawings.DrawingPath;
-import com.example.drawings.DrawingSurface.DrawThread;
 
 public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callback {
     private Boolean _run;
@@ -37,10 +29,10 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
 
         commandManager = new CommandManager();
-        thread = new DrawThread(getHolder());
     }
 
-    private Handler previewDoneHandler = new Handler(){
+    @SuppressLint("HandlerLeak")
+	private Handler previewDoneHandler = new Handler(){
         @Override
         public void handleMessage(Message msg) {
             isDrawing = false;
@@ -53,13 +45,11 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
         public DrawThread(SurfaceHolder surfaceHolder){
             mSurfaceHolder = surfaceHolder;
-
         }
 
         public void setRunning(boolean run) {
             _run = run;
         }
-
 
         @Override
         public void run() {
@@ -67,29 +57,26 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
             while (_run){
                 if(isDrawing == true){
                     try{
-                        canvas = mSurfaceHolder.lockCanvas(null);
                         if(mBitmap == null){
                             mBitmap =  Bitmap.createBitmap (1, 1, Bitmap.Config.ARGB_8888);
+                            mBitmap.eraseColor(android.graphics.Color.GREEN);
                         }
                         final Canvas c = new Canvas (mBitmap);
 
-                        c.drawColor(0, PorterDuff.Mode.CLEAR);
-                        canvas.drawColor(0, PorterDuff.Mode.CLEAR);
+                        canvas = mSurfaceHolder.lockCanvas(null);
+                        
+                        c.drawColor(0xFFFFFFFF, PorterDuff.Mode.CLEAR);
+                        canvas.drawColor(0xFFFFFFFF, PorterDuff.Mode.CLEAR);
 
-
-                        commandManager.executeAll(c,previewDoneHandler);
+                        commandManager.executeAll(c, previewDoneHandler);
                         previewPath.draw(c);
                         
-                        canvas.drawBitmap (mBitmap, 0,  0,null);
-                    } finally {
+                        canvas.drawBitmap(mBitmap, 0, 0, null);
                         mSurfaceHolder.unlockCanvasAndPost(canvas);
-                    }
-
-
+                    } catch(Exception e) {}
                 }
 
             }
-
         }
     }
 
@@ -105,8 +92,6 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
     public void redo(){
         isDrawing = true;
         commandManager.redo();
-
-
     }
 
     public void undo(){
@@ -124,30 +109,28 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
 
 
     public void surfaceChanged(SurfaceHolder holder, int format, int width,  int height) {
-        // TODO Auto-generated method stub
-        mBitmap =  Bitmap.createBitmap (width, height, Bitmap.Config.ARGB_8888);;
+        mBitmap =  Bitmap.createBitmap (width, height, Bitmap.Config.ARGB_8888);
+        mBitmap.eraseColor(android.graphics.Color.GREEN);
     }
 
 
     public void surfaceCreated(SurfaceHolder holder) {
-        // TODO Auto-generated method stub
-        thread.setRunning(true);
-        thread.start();
+    	if (thread == null || !thread.isAlive()) {
+    		thread = new DrawThread(getHolder());
+    		thread.setRunning(true);
+        	thread.start();
+    	}
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
-        // TODO Auto-generated method stub
         boolean retry = true;
         thread.setRunning(false);
         while (retry) {
             try {
                 thread.join();
                 retry = false;
-            } catch (InterruptedException e) {
-                // we will try it again and again...
-            }
+            } catch (InterruptedException e) {}
         }
     }
-
 }
 
