@@ -56,7 +56,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 
     private Brush currentBrush;
 
-    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/TutorialForAndroidDrawings");
+    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/WhiteboardDrawings");
 
 	final String[] names = {"Line", "Circle", "Disc", "Square"};
 	final int[] images = {R.drawable.line, R.drawable.circle, R.drawable.line, R.drawable.line};
