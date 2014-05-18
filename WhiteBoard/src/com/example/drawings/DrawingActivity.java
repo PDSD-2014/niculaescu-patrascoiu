@@ -14,16 +14,25 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemSelectedListener;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.Spinner;
+import android.widget.TextView;
+
 import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
 import com.example.listener.Listener;
 import com.example.whiteboard.R;
-import com.example.brush.Brush;
-import com.example.brush.CircleBrush;
-import com.example.brush.PenBrush;
+import com.example.brush.*;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -48,6 +57,9 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
     private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/TutorialForAndroidDrawings");
 
+	final String[] names = {"Line", "Circle", "Disc", "Square"};
+	final int[] images = {R.drawable.line, R.drawable.circle, R.drawable.line, R.drawable.line};
+	
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.drawing_activity);
@@ -64,6 +76,31 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
         redoBtn = (Button) findViewById(R.id.redoBtn);
         undoBtn = (Button) findViewById(R.id.undoBtn);
+        
+        Spinner s = (Spinner) findViewById(R.id.brushMenu);
+    	s.setAdapter(new BrushSpinnerAdapter(this, R.layout.brush_descr, names));
+    	s.setOnItemSelectedListener(new OnItemSelectedListener() {
+    	    @Override
+    	    public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
+    	        switch(position) {
+    	        	case 0:
+    	        		currentBrush = new PenBrush();
+    	        		break;
+    	        	case 1:
+    	        		currentBrush = new CircleBrush();
+    	        		break;
+    	        	case 2:
+    	        		currentBrush = new DiscBrush();
+    	        		break;
+    	        	case 3:
+    	        		currentBrush = new SquareBrush();
+    	        		break;
+    	        }
+    	    }
+
+			@Override
+			public void onNothingSelected(AdapterView<?> parent) {}
+    	});
 
         redoBtn.setEnabled(false);
         undoBtn.setEnabled(false);
@@ -182,7 +219,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             case R.id.colorRedBtn:
                 currentPaint = new Paint();
                 currentPaint.setDither(true);
-                currentPaint.setColor(0xFFFF0000);
+                currentPaint.setColor(android.graphics.Color.RED);
                 currentPaint.setStyle(Paint.Style.STROKE);
                 currentPaint.setStrokeJoin(Paint.Join.ROUND);
                 currentPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -191,7 +228,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             case R.id.colorBlueBtn:
                 currentPaint = new Paint();
                 currentPaint.setDither(true);
-                currentPaint.setColor(0xFF00FF00);
+                currentPaint.setColor(android.graphics.Color.BLUE);
                 currentPaint.setStyle(Paint.Style.STROKE);
                 currentPaint.setStrokeJoin(Paint.Join.ROUND);
                 currentPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -200,7 +237,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             case R.id.colorGreenBtn:
                 currentPaint = new Paint();
                 currentPaint.setDither(true);
-                currentPaint.setColor(0xFF0000FF);
+                currentPaint.setColor(android.graphics.Color.GREEN);
                 currentPaint.setStyle(Paint.Style.STROKE);
                 currentPaint.setStrokeJoin(Paint.Join.ROUND);
                 currentPaint.setStrokeCap(Paint.Cap.ROUND);
@@ -223,7 +260,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
                 undoBtn.setEnabled( true );
             break;
-            case R.id.saveBtn:
+            /*case R.id.saveBtn:
                 final Activity currentActivity  = this;
                 Handler saveHandler = new Handler(){
                     @Override
@@ -246,7 +283,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             break;
             case R.id.pathBtn:
                 currentBrush = new PenBrush();
-            break;
+            break;*/
         }
     }
 
@@ -288,4 +325,34 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
             }
         }
     }
+    
+    public class BrushSpinnerAdapter extends ArrayAdapter<String> {
+
+        public BrushSpinnerAdapter(Context context, int textViewResourceId, String[] objects) {
+            super(context, textViewResourceId, objects);
+        }
+
+        @Override
+        public View getDropDownView(int position, View convertView,ViewGroup parent) {
+            return getCustomView(position, convertView, parent);
+        }
+
+        @Override
+        public View getView(int position, View convertView, ViewGroup parent) {
+            return getCustomView(position, convertView, parent);
+        }
+
+        public View getCustomView(int position, View convertView, ViewGroup parent) {
+
+            LayoutInflater inflater = getLayoutInflater();
+            View row=inflater.inflate(R.layout.brush_descr, parent, false);
+            TextView label=(TextView)row.findViewById(R.id.brName);
+            label.setText(names[position]);
+
+            ImageView icon=(ImageView)row.findViewById(R.id.brImage);
+            icon.setImageResource(images[position]);
+
+            return row;
+        }
+     }
 }

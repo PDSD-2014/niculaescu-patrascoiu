@@ -4,5 +4,8 @@
     <string name="app_name">WhiteBoard</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <drawable name="white">#FFFFFF</drawable>
+    <drawable name="background_c">#444444</drawable>
+    <string name="spinner_name">Brushes</string>
 
 </resources>

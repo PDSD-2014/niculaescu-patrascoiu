@@ -20,7 +20,6 @@ public class MainActivity extends Activity
         service.initializeResolveListener();
         service.initializeRegistrationListener();
         service.registerService(this, 30000);
-        //service.discoverServices();
         setContentView(R.layout.drawing_activity);
         Intent drawIntent = new Intent(this, DrawingActivity.class);
         startActivity( drawIntent);
