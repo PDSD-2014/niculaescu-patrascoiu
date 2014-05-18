@@ -10,6 +10,7 @@ import android.os.Message;
 import android.util.AttributeSet;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
 import com.example.drawings.CommandManager;
 import com.example.drawings.DrawingPath;
 
@@ -54,6 +55,10 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
         @Override
         public void run() {
             Canvas canvas = null;
+            try {
+				Thread.sleep(250, 0);
+			} catch (InterruptedException e) {}
+
             while (_run){
                 if(isDrawing == true){
                     try{
@@ -64,6 +69,9 @@ public class DrawingSurface extends SurfaceView implements SurfaceHolder.Callbac
                         final Canvas c = new Canvas (mBitmap);
 
                         canvas = mSurfaceHolder.lockCanvas(null);
+                        
+                        if (canvas == null)
+                        	continue;
                         
                         c.drawColor(0xFFFFFFFF, PorterDuff.Mode.CLEAR);
                         canvas.drawColor(0xFFFFFFFF, PorterDuff.Mode.CLEAR);

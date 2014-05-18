@@ -15,7 +15,6 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.preference.PreferenceManager;
 import android.view.MotionEvent;
@@ -33,6 +32,7 @@ import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
 import com.example.network.Command;
 import com.example.network.Listener;
+import com.example.network.NDS;
 import com.example.whiteboard.R;
 import com.example.brush.*;
 import com.example.colorPicker.*;
@@ -66,17 +66,11 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
         setContentView(R.layout.drawing_activity);
 
         setCurrentPaint();
         currentBrush = new PenBrush();
-        
-        drawingSurface = (DrawingSurface) findViewById(R.id.drawingSurface);
-        drawingSurface.setOnTouchListener(this);
-        drawingSurface.previewPath = new DrawingPath();
-        drawingSurface.previewPath.path = new Path();
-        drawingSurface.previewPath.paint = getPreviewPaint();
-
 
         redoBtn = (Button) findViewById(R.id.redoBtn);
         undoBtn = (Button) findViewById(R.id.undoBtn);
@@ -108,6 +102,12 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
     	    }
     	});
     	colorBtn.setBackgroundColor(currentPaint.getColor());
+    	
+        drawingSurface = (DrawingSurface) findViewById(R.id.drawingSurface);
+        drawingSurface.setOnTouchListener(this);
+        drawingSurface.previewPath = new DrawingPath();
+        drawingSurface.previewPath.path = new Path();
+        drawingSurface.previewPath.paint = getPreviewPaint();
     }
 
     private void setCurrentPaint(){
@@ -194,7 +194,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	}
     
     /**
-     * Sen another an undo/redo command to peers.
      */
     private void transmitCommand(float command) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
@@ -322,6 +321,19 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
         }
         redoBtn.setEnabled( true );
     }
+    
+	@Override 
+	public void onStart() {
+    	/** Activate NDS. */
+        NDS.getService().registerService(this, Listener.getListener().getPort());
+		super.onStart();
+	}
+
+	@Override 
+	public void onStop() {
+		NDS.getService().unregister();
+		super.onStop();
+	}
 
 
     private class ExportBitmapToFile extends AsyncTask<Intent,Void,Boolean> {

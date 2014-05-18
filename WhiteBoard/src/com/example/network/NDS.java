@@ -1,6 +1,7 @@
 package com.example.network;
 
 import java.net.InetAddress;
+
 import android.annotation.SuppressLint;
 import android.content.*;
 import android.net.nsd.NsdManager;
@@ -21,6 +22,20 @@ public class NDS {
 	private String mServiceName;
 	private DiscoveryListener mDiscoveryListener;
 	private ResolveListener mResolveListener;
+	private boolean registered = false;
+	private static NDS service;
+	
+	private NDS() {}
+	
+	public static NDS getService() {
+		if (service == null) {
+			service = new NDS();
+	        service.initializeDiscoveryListener();
+	        service.initializeResolveListener();
+	        service.initializeRegistrationListener();
+		}
+		return service;
+	}
 	
 	public void initializeRegistrationListener() {
 	    mRegistrationListener = new NsdManager.RegistrationListener() {
@@ -42,8 +57,7 @@ public class NDS {
 
 	        @Override
 	        public void onServiceUnregistered(NsdServiceInfo arg0) {
-	            // Service has been unregistered.  This only happens when you call
-	            // NsdManager.unregisterService() and pass in this listener.
+	        	Log.d(TAG, "Unregistered service with name: " + mServiceName);
 	        }
 
 	        @Override
@@ -64,6 +78,8 @@ public class NDS {
 
 	    mNsdManager.registerService(
 	            serviceInfo, NsdManager.PROTOCOL_DNS_SD, mRegistrationListener);
+	    
+	    registered = true;
 	}
 	
 	public void discoverServices() {
@@ -72,8 +88,10 @@ public class NDS {
 	}
 	
     public void unregister() {
-    	mNsdManager.unregisterService(mRegistrationListener);
-    	mNsdManager.stopServiceDiscovery(mDiscoveryListener);
+    	if (registered) {
+	    	mNsdManager.unregisterService(mRegistrationListener);
+	    	registered = false;
+    	}
     }
 	
 	public void initializeResolveListener() {
@@ -83,7 +101,7 @@ public class NDS {
 
 			@Override
 	        public void onResolveFailed(NsdServiceInfo serviceInfo, int errorCode) {
-	            Log.e(TAG, "Resolve failed" + errorCode);
+	            Log.d(TAG, "Resolve failed " + errorCode);
 	        }
 
 	        @Override
@@ -135,7 +153,7 @@ public class NDS {
 	        public void onServiceLost(NsdServiceInfo service) {
 	            // When the network service is no longer available.
 	            // Internal bookkeeping code goes here.
-	            Log.e(TAG, "service lost" + service);
+	            Log.d(TAG, "service lost: " + service);
 	        }
 
 	        @Override

@@ -5,6 +5,7 @@ import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 
 import android.util.Log;
+import android.widget.Toast;
 
 public class Peer {
 
@@ -25,7 +26,6 @@ public class Peer {
 			/* Close socket and remove peer in case it was closed on other end. */
 			if (bytesRead <= 0) {
 				channel.close();
-				Log.d("Peer", "Disconnect");
 				listener.removePeer(this);
 				return;
 			}
@@ -53,7 +53,8 @@ public class Peer {
 	public void sendCommand(ByteBuffer buffer) {
 		try {
 			buffer.flip();
-			Log.d("aux", "wrote " + sock.write(buffer));
+			int bytesWrote = sock.write(buffer);
+			Log.d("aux", "wrote " + bytesWrote);
 		} catch (IOException e) {
 			Log.e("Peer", "Error", e);
 			try {
