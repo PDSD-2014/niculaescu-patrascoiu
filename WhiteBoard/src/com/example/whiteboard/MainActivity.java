@@ -21,7 +21,7 @@ public class MainActivity extends Activity
         service.initializeRegistrationListener();
         service.registerService(this, 30000);
         setContentView(R.layout.drawing_activity);
-        Intent drawIntent = new Intent(this, DrawingActivity.class);
+        Intent drawIntent = new Intent(this, DrawingActivity.class);   
         startActivity( drawIntent);
     }
 	
@@ -42,4 +42,5 @@ public class MainActivity extends Activity
 		service.unregister();
 		super.onDestroy();
 	}
+	
 }

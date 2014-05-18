@@ -2,7 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.whiteboard"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0"
+    android:background="#FFFFFF"
+    android:theme="@android:style/Theme.Light" >
 
     <uses-sdk
         android:minSdkVersion="8"
