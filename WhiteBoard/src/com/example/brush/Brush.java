@@ -2,7 +2,7 @@ package com.example.brush;
 
 import android.graphics.Path;
 
-public class Brush implements  IBrush {
+public class Brush implements IBrush {
     public void mouseDown(Path path, float x, float y) {
     }
 

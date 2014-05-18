@@ -5,7 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.example.drawings.DrawingActivity;
-import com.example.listener.NDS;
+import com.example.network.NDS;
 
 public class MainActivity extends Activity
 {

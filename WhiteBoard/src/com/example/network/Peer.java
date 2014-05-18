@@ -1,4 +1,4 @@
-package com.example.listener;
+package com.example.network;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -16,7 +16,7 @@ public class Peer {
 		this.sock = sock;
 	}
 
-	public void drawFigure(SocketChannel channel) {
+	public void executeCommand(SocketChannel channel) {
 		ByteBuffer buffer = ByteBuffer.allocate(4096);
 		try {
 			int bytesRead = channel.read(buffer);
@@ -30,9 +30,9 @@ public class Peer {
 			}
 
 			buffer.flip();
-			float[] coords = new float[buffer.limit() / 4];
-			buffer.asFloatBuffer().get(coords);
-			listener.getWhiteBoard().auxDraw(coords);
+			float[] data = new float[buffer.limit() / 4];
+			buffer.asFloatBuffer().get(data);
+			listener.getWhiteBoard().processRemoteCommand(data);
 		} catch (IOException e) {
 			try {
 				channel.close();
@@ -47,13 +47,14 @@ public class Peer {
 	/** 
 	 * Send the drawing to the other peer.
 	 */
-	public void sendPath(ByteBuffer buffer) {
+	public void sendCommand(ByteBuffer buffer) {
 		try {
 			buffer.flip();
 			Log.d("aux", "wrote " + sock.write(buffer));
 		} catch (IOException e) {
 			Log.e("Peer", "Error", e);
 			try {
+				listener.removePeer(this);
 				sock.close();
 			} catch (IOException e1) {
 				Log.e("Peer", "Error", e1);

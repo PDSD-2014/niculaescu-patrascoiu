@@ -28,7 +28,8 @@ import android.widget.TextView;
 
 import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
-import com.example.listener.Listener;
+import com.example.network.Command;
+import com.example.network.Listener;
 import com.example.whiteboard.R;
 import com.example.brush.*;
 import com.example.colorPicker.*;
@@ -56,10 +57,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 
     private Brush currentBrush;
 
-    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/TutorialForAndroidDrawings");
-
-	final String[] names = {"Line", "Circle", "Disc", "Square"};
-	final int[] images = {R.drawable.line, R.drawable.circle, R.drawable.line, R.drawable.line};
+    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/WhiteBoard");
 	
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,24 +77,11 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
         undoBtn = (Button) findViewById(R.id.undoBtn);
         
         Spinner s = (Spinner) findViewById(R.id.brushMenu);
-    	s.setAdapter(new BrushSpinnerAdapter(this, R.layout.brush_descr, names));
+    	s.setAdapter(new BrushSpinnerAdapter(this, R.layout.brush_descr, BrushFactory.names));
     	s.setOnItemSelectedListener(new OnItemSelectedListener() {
     	    @Override
     	    public void onItemSelected(AdapterView<?> parentView, View selectedItemView, int position, long id) {
-    	        switch(position) {
-    	        	case 0:
-    	        		currentBrush = new PenBrush();
-    	        		break;
-    	        	case 1:
-    	        		currentBrush = new CircleBrush();
-    	        		break;
-    	        	case 2:
-    	        		currentBrush = new DiscBrush();
-    	        		break;
-    	        	case 3:
-    	        		currentBrush = new SquareBrush();
-    	        		break;
-    	        }
+    	    	currentBrush = BrushFactory.getBrush(position);
     	    }
 
 			@Override
@@ -141,9 +126,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
         return previewPaint;
     }
 
-
-
- 
     public boolean onTouch(View view, MotionEvent motionEvent) {
         if(motionEvent.getAction() == MotionEvent.ACTION_DOWN){
             drawingSurface.isDrawing = true;
@@ -193,24 +175,49 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
      * Send the data to all other devices.
      */
     private void transmitPath(ArrayList<Float> coords) {
-        ByteBuffer buffer = ByteBuffer.allocate(4 + 4 * coords.size());
+        ByteBuffer buffer = ByteBuffer.allocate(12 + 4 * coords.size());
 
         /* Build a byte buffer with the data. */
+        buffer.putFloat(Command.DRAW.getVal());
         buffer.putFloat(currentDrawingPath.paint.getColor());
+        buffer.putFloat(BrushFactory.getBrushIdx(currentBrush));
         for (float value : coords) {
             buffer.putFloat(value + 10);
         }
 		
-        Listener.getListener().sendPath(buffer);
+        Listener.getListener().sendCommand(buffer);
 	}
+    
+    /**
+     * Sen another an undo/redo command to peers.
+     */
+    private void transmitCommand(float command) {
+        ByteBuffer buffer = ByteBuffer.allocate(4);
+        buffer.putFloat(command);
+        Listener.getListener().sendCommand(buffer);
+    }
 
-	public void auxDraw(float[] fs) {
+    public void processRemoteCommand(float[] bytes) {
+    	switch (Command.getCommand((int) bytes[0])) {
+    		case DRAW:
+    			drawRemoteFigure(bytes);
+    			break;
+    		case UNDO:
+    			undo();
+    			break;
+    		case REDO:
+    			redo();
+    			break;
+    	}
+    }
+    
+	public void drawRemoteFigure(float[] coords) {
 		
     	DrawingPath path = new DrawingPath();
     	Paint paint = new Paint();
 
         paint.setDither(true);
-        paint.setColor((int)fs[0]);
+        paint.setColor((int)coords[1]);
         paint.setStyle(Paint.Style.STROKE);
         paint.setStrokeJoin(Paint.Join.ROUND);
         paint.setStrokeCap(Paint.Cap.ROUND);
@@ -219,16 +226,19 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
     	path.path = new Path();
     	path.paint = paint;
     
-    	Brush br = new PenBrush();
-    	br.mouseDown(path.path, fs[1], fs[2] + 10);
-    	for (int i = 1; i < fs.length; i += 2)
-    		br.mouseMove(path.path, fs[i], fs[i + 1] + 10);
+    	Brush br = BrushFactory.getBrush((int) coords[2]);
+    	br.mouseDown(path.path, coords[3], coords[4]);
+    	for (int i = 3; i < coords.length; i += 2)
+    		br.mouseMove(path.path, coords[i], coords[i + 1]);
         drawingSurface.addDrawingPath(path);
+        
+        undoBtn.setEnabled(true);
+        redoBtn.setEnabled(false);
     }
 	
 	@Override
 	public void colorChanged(int color) {
-	PreferenceManager.getDefaultSharedPreferences(this).edit().putInt(
+		PreferenceManager.getDefaultSharedPreferences(this).edit().putInt(
 	        COLOR_PREFERENCE_KEY, color).commit();
 		currentPaint = new Paint();
 	    currentPaint.setDither(true);
@@ -253,20 +263,13 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	            break;
 
             case R.id.undoBtn:
-                drawingSurface.undo();
-                if( drawingSurface.hasMoreUndo() == false ){
-                    undoBtn.setEnabled( false );
-                }
-                redoBtn.setEnabled( true );
+                undo();
+                transmitCommand(Command.UNDO.getVal());
                 break;
 
             case R.id.redoBtn:
-                drawingSurface.redo();
-                if( drawingSurface.hasMoreRedo() == false ){
-                    redoBtn.setEnabled( false );
-                }
-
-                undoBtn.setEnabled( true );
+                redo();
+                transmitCommand(Command.REDO.getVal());
                 break;
             /*case R.id.saveBtn:
                 final Activity currentActivity  = this;
@@ -293,6 +296,23 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
                 currentBrush = new PenBrush();
             break;*/
         }
+    }
+    
+    private void redo() {
+        drawingSurface.redo();
+        if( drawingSurface.hasMoreRedo() == false ){
+            redoBtn.setEnabled( false );
+        }
+
+        undoBtn.setEnabled( true );
+    }
+    
+    private void undo() {
+        drawingSurface.undo();
+        if( drawingSurface.hasMoreRedo() == false ){
+            undoBtn.setEnabled( false );
+        }
+        redoBtn.setEnabled( true );
     }
 
 
@@ -355,10 +375,10 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
             LayoutInflater inflater = getLayoutInflater();
             View row=inflater.inflate(R.layout.brush_descr, parent, false);
             TextView label=(TextView)row.findViewById(R.id.brName);
-            label.setText(names[position]);
+            label.setText(BrushFactory.names[position]);
 
             ImageView icon=(ImageView)row.findViewById(R.id.brImage);
-            icon.setImageResource(images[position]);
+            icon.setImageResource(BrushFactory.images[position]);
 
             return row;
         }

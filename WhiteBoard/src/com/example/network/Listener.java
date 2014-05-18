@@ -1,4 +1,4 @@
-package com.example.listener;
+package com.example.network;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -96,7 +96,7 @@ public class Listener implements Runnable {
 							@Override
 							public void run() {
 								Peer peer = (Peer) key.attachment();
-								peer.drawFigure((SocketChannel) key.channel());
+								peer.executeCommand((SocketChannel) key.channel());
 								try {
 									if (key.channel().isOpen()) {
 										key.channel().register(selector, SelectionKey.OP_READ, peer);
@@ -137,8 +137,8 @@ public class Listener implements Runnable {
 		}
 	}
 
-	public void sendPath(ByteBuffer buffer) {
-		new SendPath().execute(peers, buffer);
+	public void sendCommand(ByteBuffer buffer) {
+		new SendCommand().execute(peers, buffer);
 	}
 
 	public void newConnection(String address, int port) {
@@ -171,7 +171,7 @@ class NewConnection extends AsyncTask<Object, Listener, Void> {
     }
 }
 
-class SendPath extends AsyncTask<Object, Void, Void> {
+class SendCommand extends AsyncTask<Object, Void, Void> {
 
 	@SuppressWarnings("unchecked")
 	@Override
@@ -179,7 +179,7 @@ class SendPath extends AsyncTask<Object, Void, Void> {
 		ArrayList<Peer> peers = (ArrayList<Peer>) params[0];
 		ByteBuffer buffer = (ByteBuffer) params[1];
 		for(Peer p : peers) {
-			p.sendPath(buffer);
+			p.sendCommand(buffer);
 		}
 		return null;
 	}
