@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
@@ -194,11 +195,25 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	}
     
     /**
+     * Send a command to a device.
      */
     private void transmitCommand(float command) {
         ByteBuffer buffer = ByteBuffer.allocate(4);
         buffer.putFloat(command);
         Listener.getListener().sendCommand(buffer);
+    }
+    
+    public void displayMessage(final String message) {
+    	
+    	final Context context = this;
+    	runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+		    	Toast.makeText(context, message, Toast.LENGTH_SHORT).show();	
+			}
+		});
+
     }
 
     public void processRemoteCommand(final float[] bytes) {

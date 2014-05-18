@@ -27,6 +27,7 @@ public class Peer {
 			if (bytesRead <= 0) {
 				channel.close();
 				listener.removePeer(this);
+				listener.getWhiteBoard().displayMessage("Peer Disconnected");
 				return;
 			}
 
@@ -38,6 +39,7 @@ public class Peer {
 			try {
 				channel.close();
 				listener.removePeer(this);
+				listener.getWhiteBoard().displayMessage("Peer Disconnected");
 			} catch (IOException e1) {
 				Log.d("Peer", "Error", e1);
 			}

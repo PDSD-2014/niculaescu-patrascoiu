@@ -92,6 +92,7 @@ public class Listener implements Runnable {
 						Peer p = new Peer(this, newConn);
 						peers.add(p);
 						Log.d(TAG, "New Connection");
+						whiteBoard.displayMessage("New Peer");
 						newConn.register(selector, SelectionKey.OP_READ, p);
 						selector.wakeup();
 					} else 	if (key.isReadable() || key.isWritable()) {
@@ -171,6 +172,7 @@ class NewConnection extends AsyncTask<Object, Listener, Void> {
 			socket.configureBlocking(false);
 			listener.registerSocket(socket, peer);
 			peers.add(peer);
+			listener.getWhiteBoard().displayMessage("New Peer");
 		} catch(Exception e) {
 			Log.e("NewConn", "Error", e);
 		}
