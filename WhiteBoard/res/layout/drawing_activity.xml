@@ -14,7 +14,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
     >
-        <Button
+        <!-- Button
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"
                 android:text="R"
@@ -34,7 +34,14 @@
                 android:text="B"
                 android:onClick="onClick"
                 android:id="@+id/colorGreenBtn"
-        />
+        /-->
+        <Button 
+            	android:layout_height="wrap_content"
+                android:layout_width="wrap_content"
+                android:text="Color"
+                android:onClick="onClick"
+                android:id="@+id/Button01"
+      	/>
         <Button
                 android:layout_height="wrap_content"
                 android:layout_width="wrap_content"

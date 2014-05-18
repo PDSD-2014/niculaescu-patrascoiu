@@ -7,6 +7,7 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.os.AsyncTask;
@@ -14,9 +15,11 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.preference.PreferenceManager;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
+
 import com.example.drawings.DrawingPath;
 import com.example.drawings.DrawingSurface;
 import com.example.listener.Listener;
@@ -24,16 +27,20 @@ import com.example.whiteboard.R;
 import com.example.brush.Brush;
 import com.example.brush.CircleBrush;
 import com.example.brush.PenBrush;
+import com.example.colorPicker.*;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
-public class DrawingActivity extends Activity implements View.OnTouchListener{
+public class DrawingActivity extends Activity implements View.OnTouchListener, ColorPickerDialog.OnColorChangedListener{
     private DrawingSurface drawingSurface;
     private DrawingPath currentDrawingPath;
     private Paint currentPaint;
+	private static final String BRIGHTNESS_PREFERENCE_KEY = "brightness";
+	private static final String COLOR_PREFERENCE_KEY = "color";
     
     public DrawingActivity() throws IOException {
     	Listener.getListener().setDrawingActivity(this);
@@ -67,6 +74,19 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
 
         redoBtn.setEnabled(false);
         undoBtn.setEnabled(false);
+        
+        Button btn = (Button) findViewById(R.id.Button01);
+    	btn.setOnClickListener(new View.OnClickListener() {
+    	    @Override
+    	    public void onClick(View v) {
+    	        int color = PreferenceManager.getDefaultSharedPreferences(
+    	                DrawingActivity.this).getInt(COLOR_PREFERENCE_KEY,
+    	                Color.WHITE);
+    	        new ColorPickerDialog(DrawingActivity.this, DrawingActivity.this,
+    	                color).show();
+    	    }
+    	});
+        
     }
 
     private void setCurrentPaint(){
@@ -174,39 +194,60 @@ public class DrawingActivity extends Activity implements View.OnTouchListener{
     		br.mouseMove(path.path, fs[i], fs[i + 1] + 10);
         drawingSurface.addDrawingPath(path);
     }
-
+	
+	@Override
+	public void colorChanged(int color) {
+	PreferenceManager.getDefaultSharedPreferences(this).edit().putInt(
+	        COLOR_PREFERENCE_KEY, color).commit();
+//	tv.setTextColor(color);
+		currentPaint = new Paint();
+	    currentPaint.setDither(true);
+	    currentPaint.setColor(color);
+	    currentPaint.setStyle(Paint.Style.STROKE);
+	    currentPaint.setStrokeJoin(Paint.Join.ROUND);
+	    currentPaint.setStrokeCap(Paint.Cap.ROUND);
+	    currentPaint.setStrokeWidth(3);
+	}
 
     @SuppressLint("HandlerLeak")
 	public void onClick(View view){
         switch (view.getId()){
-            case R.id.colorRedBtn:
-                currentPaint = new Paint();
-                currentPaint.setDither(true);
-                currentPaint.setColor(0xFFFF0000);
-                currentPaint.setStyle(Paint.Style.STROKE);
-                currentPaint.setStrokeJoin(Paint.Join.ROUND);
-                currentPaint.setStrokeCap(Paint.Cap.ROUND);
-                currentPaint.setStrokeWidth(3);
-            break;
-            case R.id.colorBlueBtn:
-                currentPaint = new Paint();
-                currentPaint.setDither(true);
-                currentPaint.setColor(0xFF00FF00);
-                currentPaint.setStyle(Paint.Style.STROKE);
-                currentPaint.setStrokeJoin(Paint.Join.ROUND);
-                currentPaint.setStrokeCap(Paint.Cap.ROUND);
-                currentPaint.setStrokeWidth(3);
-            break;
-            case R.id.colorGreenBtn:
-                currentPaint = new Paint();
-                currentPaint.setDither(true);
-                currentPaint.setColor(0xFF0000FF);
-                currentPaint.setStyle(Paint.Style.STROKE);
-                currentPaint.setStrokeJoin(Paint.Join.ROUND);
-                currentPaint.setStrokeCap(Paint.Cap.ROUND);
-                currentPaint.setStrokeWidth(3);
-            break;
-
+	        case R.id.Button01:
+	            currentPaint = new Paint();
+	            currentPaint.setDither(true);
+	            currentPaint.setColor(0xFFFF0000);
+	            currentPaint.setStyle(Paint.Style.STROKE);
+	            currentPaint.setStrokeJoin(Paint.Join.ROUND);
+	            currentPaint.setStrokeCap(Paint.Cap.ROUND);
+	            currentPaint.setStrokeWidth(3);
+	        break;
+//            case R.id.colorRedBtn:
+//                currentPaint = new Paint();
+//                currentPaint.setDither(true);
+//                currentPaint.setColor(0xFFFF0000);
+//                currentPaint.setStyle(Paint.Style.STROKE);
+//                currentPaint.setStrokeJoin(Paint.Join.ROUND);
+//                currentPaint.setStrokeCap(Paint.Cap.ROUND);
+//                currentPaint.setStrokeWidth(3);
+//            break;
+//            case R.id.colorBlueBtn:
+//                currentPaint = new Paint();
+//                currentPaint.setDither(true);
+//                currentPaint.setColor(0xFF00FF00);
+//                currentPaint.setStyle(Paint.Style.STROKE);
+//                currentPaint.setStrokeJoin(Paint.Join.ROUND);
+//                currentPaint.setStrokeCap(Paint.Cap.ROUND);
+//                currentPaint.setStrokeWidth(3);
+//            break;
+//            case R.id.colorGreenBtn:
+//                currentPaint = new Paint();
+//                currentPaint.setDither(true);
+//                currentPaint.setColor(0xFF0000FF);
+//                currentPaint.setStyle(Paint.Style.STROKE);
+//                currentPaint.setStrokeJoin(Paint.Join.ROUND);
+//                currentPaint.setStrokeCap(Paint.Cap.ROUND);
+//                currentPaint.setStrokeWidth(3);
+//            break;
             case R.id.undoBtn:
                 drawingSurface.undo();
                 if( drawingSurface.hasMoreUndo() == false ){
