@@ -14,27 +14,6 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
     >
-        <!-- Button
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:text="R"
-                android:onClick="onClick"
-                android:id="@+id/colorRedBtn"
-        />
-        <Button
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:text="G"
-                android:onClick="onClick"
-                android:id="@+id/colorBlueBtn"
-        />
-        <Button
-                android:layout_height="wrap_content"
-                android:layout_width="wrap_content"
-                android:text="B"
-                android:onClick="onClick"
-                android:id="@+id/colorGreenBtn"
-        /-->
         <Button 
             	android:layout_height="wrap_content"
                 android:layout_width="wrap_content"

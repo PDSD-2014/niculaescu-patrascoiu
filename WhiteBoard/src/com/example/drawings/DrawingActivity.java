@@ -39,7 +39,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
     private DrawingSurface drawingSurface;
     private DrawingPath currentDrawingPath;
     private Paint currentPaint;
-	private static final String BRIGHTNESS_PREFERENCE_KEY = "brightness";
 	private static final String COLOR_PREFERENCE_KEY = "color";
     
     public DrawingActivity() throws IOException {
@@ -199,7 +198,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	public void colorChanged(int color) {
 	PreferenceManager.getDefaultSharedPreferences(this).edit().putInt(
 	        COLOR_PREFERENCE_KEY, color).commit();
-//	tv.setTextColor(color);
 		currentPaint = new Paint();
 	    currentPaint.setDither(true);
 	    currentPaint.setColor(color);
@@ -221,33 +219,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	            currentPaint.setStrokeCap(Paint.Cap.ROUND);
 	            currentPaint.setStrokeWidth(3);
 	        break;
-//            case R.id.colorRedBtn:
-//                currentPaint = new Paint();
-//                currentPaint.setDither(true);
-//                currentPaint.setColor(0xFFFF0000);
-//                currentPaint.setStyle(Paint.Style.STROKE);
-//                currentPaint.setStrokeJoin(Paint.Join.ROUND);
-//                currentPaint.setStrokeCap(Paint.Cap.ROUND);
-//                currentPaint.setStrokeWidth(3);
-//            break;
-//            case R.id.colorBlueBtn:
-//                currentPaint = new Paint();
-//                currentPaint.setDither(true);
-//                currentPaint.setColor(0xFF00FF00);
-//                currentPaint.setStyle(Paint.Style.STROKE);
-//                currentPaint.setStrokeJoin(Paint.Join.ROUND);
-//                currentPaint.setStrokeCap(Paint.Cap.ROUND);
-//                currentPaint.setStrokeWidth(3);
-//            break;
-//            case R.id.colorGreenBtn:
-//                currentPaint = new Paint();
-//                currentPaint.setDither(true);
-//                currentPaint.setColor(0xFF0000FF);
-//                currentPaint.setStyle(Paint.Style.STROKE);
-//                currentPaint.setStrokeJoin(Paint.Join.ROUND);
-//                currentPaint.setStrokeCap(Paint.Cap.ROUND);
-//                currentPaint.setStrokeWidth(3);
-//            break;
             case R.id.undoBtn:
                 drawingSurface.undo();
                 if( drawingSurface.hasMoreUndo() == false ){
