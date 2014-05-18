@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.os.Bundle;
 
 import com.example.drawings.DrawingActivity;
+import com.example.network.Listener;
 import com.example.network.NDS;
 
 public class MainActivity extends Activity
@@ -19,7 +20,7 @@ public class MainActivity extends Activity
         service.initializeDiscoveryListener();
         service.initializeResolveListener();
         service.initializeRegistrationListener();
-        service.registerService(this, 30000);
+        service.registerService(this, Listener.getListener().getPort());
         setContentView(R.layout.drawing_activity);
         Intent drawIntent = new Intent(this, DrawingActivity.class);   
         startActivity( drawIntent);

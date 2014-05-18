@@ -1,7 +1,7 @@
 package com.example.network;
 
 import java.net.InetAddress;
-
+import android.annotation.SuppressLint;
 import android.content.*;
 import android.net.nsd.NsdManager;
 import android.net.nsd.NsdManager.DiscoveryListener;
@@ -10,6 +10,7 @@ import android.net.nsd.NsdServiceInfo;
 import android.net.nsd.NsdManager.RegistrationListener;
 import android.util.Log;
 
+@SuppressLint("NewApi")
 public class NDS {
 
 	protected static final String TAG = "NDS";

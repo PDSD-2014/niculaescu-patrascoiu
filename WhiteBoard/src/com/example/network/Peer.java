@@ -25,6 +25,7 @@ public class Peer {
 			/* Close socket and remove peer in case it was closed on other end. */
 			if (bytesRead <= 0) {
 				channel.close();
+				Log.d("Peer", "Disconnect");
 				listener.removePeer(this);
 				return;
 			}
@@ -40,6 +41,8 @@ public class Peer {
 			} catch (IOException e1) {
 				Log.d("Peer", "Error", e1);
 			}
+			Log.e("Peer", "Error", e);
+		} catch (Exception e) {
 			Log.e("Peer", "Error", e);
 		}
 	}

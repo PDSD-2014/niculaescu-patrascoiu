@@ -2,7 +2,9 @@ package com.example.drawings;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -12,6 +14,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.preference.PreferenceManager;
@@ -54,6 +57,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 
     private Button redoBtn;
     private Button undoBtn;
+    private Button colorBtn;
 
     private Brush currentBrush;
 
@@ -92,8 +96,8 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
         redoBtn.setEnabled(false);
         undoBtn.setEnabled(false);
         
-        Button btn = (Button) findViewById(R.id.colorPick);
-    	btn.setOnClickListener(new View.OnClickListener() {
+        colorBtn = (Button) findViewById(R.id.colorPick);
+    	colorBtn.setOnClickListener(new View.OnClickListener() {
     	    @Override
     	    public void onClick(View v) {
     	        int color = PreferenceManager.getDefaultSharedPreferences(
@@ -103,7 +107,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
     	                color).show();
     	    }
     	});
-        
+    	colorBtn.setBackgroundColor(currentPaint.getColor());
     }
 
     private void setCurrentPaint(){
@@ -198,18 +202,26 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
         Listener.getListener().sendCommand(buffer);
     }
 
-    public void processRemoteCommand(float[] bytes) {
-    	switch (Command.getCommand((int) bytes[0])) {
-    		case DRAW:
-    			drawRemoteFigure(bytes);
-    			break;
-    		case UNDO:
-    			undo();
-    			break;
-    		case REDO:
-    			redo();
-    			break;
-    	}
+    public void processRemoteCommand(final float[] bytes) {
+    	
+    	/* Code that modifies UI must run on UI thread. */
+    	runOnUiThread(new Runnable() {
+			
+			@Override
+			public void run() {
+		    	switch (Command.getCommand((int) bytes[0])) {
+		    		case DRAW:
+		    			drawRemoteFigure(bytes);
+		    			break;
+		    		case UNDO:
+		    			undo();
+		    			break;
+		    		case REDO:
+		    			redo();
+		    			break;
+		    	}
+	    	}
+		});
     }
     
 	public void drawRemoteFigure(float[] coords) {
@@ -248,6 +260,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 	    currentPaint.setStrokeJoin(Paint.Join.ROUND);
 	    currentPaint.setStrokeCap(Paint.Cap.ROUND);
 	    currentPaint.setStrokeWidth(3);
+	    colorBtn.setBackgroundColor(currentPaint.getColor());
 	}
 
     @SuppressLint("HandlerLeak")
@@ -272,14 +285,14 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
                 redo();
                 transmitCommand(Command.REDO.getVal());
                 break;
-            /*case R.id.saveBtn:
+            case R.id.saveBtn:
                 final Activity currentActivity  = this;
                 Handler saveHandler = new Handler(){
                     @Override
                     public void handleMessage(Message msg) {
                         final AlertDialog alertDialog = new AlertDialog.Builder(currentActivity).create();
-                        alertDialog.setTitle("Saved 1");
-                        alertDialog.setMessage("Your drawing had been saved :)");
+                        alertDialog.setTitle("Drawing Saved");
+                        alertDialog.setMessage("Your drawing has been saved");
                         alertDialog.setButton(DialogInterface.BUTTON_NEUTRAL, "OK", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
                                 return;
@@ -290,12 +303,6 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
                 } ;
                new ExportBitmapToFile(this, saveHandler, drawingSurface.getBitmap()).execute();
             break;
-            case R.id.circleBtn:
-                currentBrush = new CircleBrush();
-            break;
-            case R.id.pathBtn:
-                currentBrush = new PenBrush();
-            break;*/
         }
     }
     
@@ -310,7 +317,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
     
     private void undo() {
         drawingSurface.undo();
-        if( drawingSurface.hasMoreRedo() == false ){
+        if( drawingSurface.hasMoreUndo() == false ){
             undoBtn.setEnabled( false );
         }
         redoBtn.setEnabled( true );
@@ -333,7 +340,7 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
                     APP_FILE_PATH.mkdirs();
                 }
 
-                final FileOutputStream out = new FileOutputStream(new File(APP_FILE_PATH + "/myAwesomeDrawing.png"));
+                final FileOutputStream out = new FileOutputStream(new File(APP_FILE_PATH + "/WhiteBoardImage.png"));
                 nBitmap.compress(Bitmap.CompressFormat.PNG, 90, out);
                 out.flush();
                 out.close();

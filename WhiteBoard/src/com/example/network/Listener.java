@@ -42,7 +42,7 @@ public class Listener implements Runnable {
 		/* Open listener and register it with the selector. Listen on all interfaces. */
 		listener = ServerSocketChannel.open();
 
-		listener.socket().bind(new InetSocketAddress("0.0.0.0", 30000));
+		listener.socket().bind(new InetSocketAddress("0.0.0.0", 0));
 		listener.configureBlocking(false);
 		listener.register(selector, SelectionKey.OP_ACCEPT, null);
 		
@@ -59,6 +59,10 @@ public class Listener implements Runnable {
 			}
 		}
 		return instance;
+	}
+	
+	public int getPort() {
+		return getListener().listener.socket().getLocalPort();
 	}
 	
 	public void setDrawingActivity(DrawingActivity whiteBoard) {
@@ -142,7 +146,7 @@ public class Listener implements Runnable {
 	}
 
 	public void newConnection(String address, int port) {
-		new NewConnection().execute(this, address, port);
+		new NewConnection().execute(this, address, port, peers);
 	}
 
 	public DrawingActivity getWhiteBoard() {
@@ -160,10 +164,12 @@ class NewConnection extends AsyncTask<Object, Listener, Void> {
 		try {
 			Listener listener = (Listener) params[0];
 			SocketChannel socket = SocketChannel.open();
+			ArrayList<Peer> peers = (ArrayList<Peer>) params[3];
 			socket.connect(new InetSocketAddress((String)params[1], (Integer)params[2]));
 			Peer peer = new Peer(listener, socket);
 			socket.configureBlocking(false);
 			listener.registerSocket(socket, peer);
+			peers.add(peer);
 		} catch(Exception e) {
 			Log.e("NewConn", "Error", e);
 		}
