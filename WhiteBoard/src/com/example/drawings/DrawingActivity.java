@@ -57,7 +57,8 @@ public class DrawingActivity extends Activity implements View.OnTouchListener, C
 
     private Brush currentBrush;
 
-    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/WhiteBoard");
+
+    private File APP_FILE_PATH = new File(Environment.getExternalStorageDirectory().getPath() + "/WhiteboardDrawings");
 	
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
